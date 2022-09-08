@@ -123,7 +123,6 @@ func processEhawEmail(ctx context.Context, args []string) {
 	}
 	if len(msgs) < 1 {
 		fmt.Println("There are no submitted eHaW messages to process at this time.")
-		return
 	} else {
 		// process each eHaW submitted message
 		for msg := 0; msg < len(msgs); msg++ {
@@ -223,7 +222,7 @@ func updateEhawMsg(Id int, status string, newMsgId string) {
 		log.Println(err)
 		return
 	}
-	fmt.Println(res, " record updated")
+	log.Println(res, "eHaW record updated")
 }
 
 func updateSentEhawMsgStatus() (int, error) {
