@@ -1,0 +1,8 @@
+{
+  "eHaW": {
+    "mysql_user": "ehawuser2",
+    "mysql_password": "eHaW$user2",
+    "mysql_host": "tcp(127.0.0.1:3306)",
+    "mysql_database": "ehaw"
+  }
+}

@@ -92,6 +92,11 @@ var commands = []Command{
 		HandleFunc: composeMessage,
 	},
 	{
+		Str:        "process",
+		Desc:       "Process eHaW messages.",
+		HandleFunc: processEhawEmail,
+	},
+	{
 		Str:  "read",
 		Desc: "Read messages.",
 		HandleFunc: func(ctx context.Context, args []string) {
