@@ -121,63 +121,69 @@ func processEhawEmail(ctx context.Context, args []string) {
 		fmt.Println(" There was a problem getting messages from the eHaW database")
 		return
 	}
-	// process each eHaW submitted message
-	for msg := 0; msg < len(msgs); msg++ {
-		// display the message for Moderation by a PAT operator
-		fmt.Println("\n\r\r")
-		fmt.Println("eHaW Id: ", msgs[msg].msgId)
-		fmt.Println("Subject: ", msgs[msg].msgSubject)
-		fmt.Println("To:      ", msgs[msg].msgTo, "\n\r\r")
-		fmt.Println(msgs[msg].msgBody)
-		fmt.Println("\n\r")
-		// the PAT operator decides what happens next
-		fmt.Print("Accept, Reject, or Ignore: ")
-		reader := bufio.NewReader(os.Stdin)
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			log.Println(err)
-		}
-		input = strings.TrimSpace(input)
-		input = strings.ToUpper(input)
-		switch input {
-		case "R", "REJECT":
-			// if rejected, status is updated in the eHaW database
-			//  and the submitted message is effectively closed
-			// add code here to mark the eHaW message record as Rejected
-			fmt.Println("this message has been Rejected and will not be sent.")
-		case "I", "IGNORE":
-			// if Ignored, no action is taken and the process move forward to
-			//  the next message.  The ignored message will be included the
-			//  next time eHaW messages are processed
-			fmt.Println("This message will be ignored for now.")
-		case "A", "ACCEPT":
-			// if the message is accepted, we build a quick list of MIDs from
-			//  the PAT out folder
-			beforeList, err := getMsgBoxList("out")
-			if err != nil {
-				fmt.Println("Error reading PAT Out folder")
-				return
-			}
-			// then create the in PAT almost the same way it is done in the
-			//  PAT cli interface
-			err = ehawComposeMessage(msgs[msg].msgSubject, msgs[msg].msgTo, msgs[msg].msgBody)
+	if len(msgs) < 1 {
+		fmt.Println("There are no submitted eHaW messages to process at this time.")
+		return
+	} else {
+		// process each eHaW submitted message
+		for msg := 0; msg < len(msgs); msg++ {
+			// display the message for Moderation by a PAT operator
+			fmt.Println("\n\r\r")
+			fmt.Println("eHaW Id: ", msgs[msg].msgId)
+			fmt.Println("Subject: ", msgs[msg].msgSubject)
+			fmt.Println("To:      ", msgs[msg].msgTo, "\n\r\r")
+			fmt.Println(msgs[msg].msgBody)
+			fmt.Println("\n\r")
+			// the PAT operator decides what happens next
+			fmt.Print("Accept, Reject, or Ignore: ")
+			reader := bufio.NewReader(os.Stdin)
+			input, err := reader.ReadString('\n')
 			if err != nil {
 				log.Println(err)
 			}
-			// after the message is created, we immediately build a new list of MIDs
-			//  in the PAT out folder
-			afterList, err := getMsgBoxList("out")
-			if err != nil {
-				log.Println(err)
+			input = strings.TrimSpace(input)
+			input = strings.ToUpper(input)
+			switch input {
+			case "R", "REJECT":
+				// if rejected, status is updated in the eHaW database
+				//  and the submitted message is effectively closed
+				// add code here to mark the eHaW message record as Rejected
+				updateEhawMsg(msgs[msg].msgId, "Rejected", "")
+				fmt.Println("this message has been Rejected and will not be sent.")
+			case "I", "IGNORE":
+				// if Ignored, no action is taken and the process move forward to
+				//  the next message.  The ignored message will be included the
+				//  next time eHaW messages are processed
+				fmt.Println("This message will be ignored for now.")
+			case "A", "ACCEPT":
+				// if the message is accepted, we build a quick list of MIDs from
+				//  the PAT out folder
+				beforeList, err := getMsgBoxList("out")
+				if err != nil {
+					fmt.Println("Error reading PAT Out folder")
+					return
+				}
+				// then create the in PAT almost the same way it is done in the
+				//  PAT cli interface
+				err = ehawComposeMessage(msgs[msg].msgSubject, msgs[msg].msgTo, msgs[msg].msgBody)
+				if err != nil {
+					log.Println(err)
+				}
+				// after the message is created, we immediately build a new list of MIDs
+				//  in the PAT out folder
+				afterList, err := getMsgBoxList("out")
+				if err != nil {
+					log.Println(err)
+				}
+				// by comparing the 2 out folder lists we can identify the Message ID (MID)
+				// created for the new message
+				newMsgId := getMsgIds(beforeList, afterList)
+				// finally, we can change the message status to Accepted and store the MID
+				//  in eHaW for reference in a future process cycle
+				updateEhawMsg(msgs[msg].msgId, "Accepted", newMsgId[0])
+			default:
+				fmt.Println("Invalid action, ignoring this message for now.")
 			}
-			// by comparing the 2 out folder lists we can identify the Message ID (MID)
-			// created for the new message
-			newMsgId := getMsgIds(beforeList, afterList)
-			// finally, we can change the message status to Accepted and store the MID
-			//  in eHaW for reference in a future process cycle
-			updateEhawMsg(msgs[msg].msgId, "Accepted", newMsgId[0])
-		default:
-			fmt.Println("Invalid action, ignoring this message for now.")
 		}
 	}
 	// after all the messages are processed, we read a list previously Accepted
@@ -187,6 +193,7 @@ func processEhawEmail(ctx context.Context, args []string) {
 	if err != nil {
 		fmt.Println("Problem updating eHaW sent message status")
 	}
+
 	// if sent messages were updated, tell the PAT operator
 	if newMsgsSent > 0 {
 		fmt.Println(strconv.Itoa(newMsgsSent) + " eHaW messages set to Sent")
@@ -206,20 +213,17 @@ func updateEhawMsg(Id int, status string, newMsgId string) {
 	}
 	defer db.Close()
 	// yes its ugly SQL, but this is the way MySQL updates a record
-	switch status {
-	case "Accepted":
-		stmt, err := db.Prepare("UPDATE msgQueue SET msgStatus=?, msgWinlinkId=? WHERE msgId =?")
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		res, err := stmt.Exec(status, newMsgId, strconv.Itoa(Id))
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		fmt.Println(res, " record updated")
+	stmt, err := db.Prepare("UPDATE msgQueue SET msgStatus=?, msgWinlinkId=? WHERE msgId =?")
+	if err != nil {
+		log.Println(err)
+		return
 	}
+	res, err := stmt.Exec(status, newMsgId, strconv.Itoa(Id))
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	fmt.Println(res, " record updated")
 }
 
 func updateSentEhawMsgStatus() (int, error) {
