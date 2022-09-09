@@ -7,6 +7,7 @@ require (
 	github.com/bndr/gotabulate v1.1.3-0.20170315142410-bc555436bfd5
 	github.com/dimchansky/utfbom v1.1.1
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
