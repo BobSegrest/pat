@@ -5,6 +5,17 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/la5nta/pat)](https://goreportcard.com/report/github.com/la5nta/pat)
 [![Liberapay Patreons](http://img.shields.io/liberapay/patrons/la5nta.svg?logo=liberapay)](https://liberapay.com/la5nta)
 
+
+## This is a fork!, NOT the suported Pat Winlink distribution
+
+This is a fork of the version 13.0 Pat Winlink code.  It has been modified by Bob Segrest [KO2F] to support eHaW, an
+Emergency Health & Welfare Messaging Service.  Pat modifications in this fork are limited to the addition of a 'Process' 
+option in the Pat cli interface.  One file (main.go) has been modified.  One code fie (eHaW_compose.go) has been added and a 
+sample configuration file (eHaW_config.json) has been included.
+
+
+For more information about eHaW, see the repository at https://github.com/BobSegrest/eHaW.
+
 ## Overview
 
 Pat is a cross platform Winlink client with basic messaging capabilities.

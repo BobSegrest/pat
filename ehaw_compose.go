@@ -134,7 +134,7 @@ func processEhawEmail(ctx context.Context, args []string) {
 			fmt.Println(msgs[msg].msgBody)
 			fmt.Println("\n\r")
 			// the PAT operator decides what happens next
-			fmt.Print("Accept, Reject, or Ignore: ")
+			fmt.Print("Accept, Decline, or Ignore: ")
 			reader := bufio.NewReader(os.Stdin)
 			input, err := reader.ReadString('\n')
 			if err != nil {
