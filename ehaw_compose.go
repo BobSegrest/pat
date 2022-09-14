@@ -143,12 +143,12 @@ func processEhawEmail(ctx context.Context, args []string) {
 			input = strings.TrimSpace(input)
 			input = strings.ToUpper(input)
 			switch input {
-			case "R", "REJECT":
-				// if rejected, status is updated in the eHaW database
+			case "D", "DECLINE":
+				// if declined, status is updated in the eHaW database
 				//  and the submitted message is effectively closed
-				// add code here to mark the eHaW message record as Rejected
-				updateEhawMsg(msgs[msg].msgId, "Rejected", "")
-				fmt.Println("this message has been Rejected and will not be sent.")
+				// add code here to mark the eHaW message record as Declined
+				updateEhawMsg(msgs[msg].msgId, "Declined", "")
+				fmt.Println("this message has been Declined and will not be sent.")
 			case "I", "IGNORE":
 				// if Ignored, no action is taken and the process move forward to
 				//  the next message.  The ignored message will be included the
